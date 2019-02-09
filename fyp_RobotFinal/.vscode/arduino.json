@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:uno",
+    "port": "COM3",
+    "sketch": "RobotFinal.ino",
+    "output": "../ArduinoOutput"
+}

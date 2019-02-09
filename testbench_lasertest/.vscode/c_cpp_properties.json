@@ -1,0 +1,37 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:\\Program Files\\Arduino\\tools\\**",
+                "C:\\Program Files\\Arduino\\hardware\\arduino\\avr\\**",
+                "C:\\Users\\Renzeydood\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\**",
+                "C:\\Users\\Renzeydood\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.11\\**",
+                "${workspaceRoot}",
+                "C:\\Program Files\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
+                "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "msvc-x64",
+            "browse": {
+                "path": [
+                    "${workspaceRoot}",
+                    "C:\\Program Files\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
+                    "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries"
+                ],
+                "limitSymbolsToIncludedHeaders": false,
+                "databaseFilename": ""
+            },
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "forcedInclude": [
+                "C:\\Program Files\\Arduino\\hardware\\arduino\\avr\\cores\\arduino\\Arduino.h"
+            ]
+        }
+    ],
+    "version": 4
+}

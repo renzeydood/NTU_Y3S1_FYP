@@ -1,0 +1,7 @@
+{
+    "port": "COM7",
+    "board": "OpenCR:OpenCR:OpenCR",
+    "configuration": "upload_method=UploadMethod",
+    "sketch": "OpenCR.ino",
+    "output": "../ArduinoOutput"
+}

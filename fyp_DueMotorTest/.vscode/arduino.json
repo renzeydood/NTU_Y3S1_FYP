@@ -1,0 +1,6 @@
+{
+    "board": "arduino:sam:arduino_due_x",
+    "port": "COM4",
+    "sketch": "DueMotorTest.ino",
+    "output": "../ArduinoOutput"
+}

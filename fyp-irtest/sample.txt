@@ -1,0 +1,13 @@
+SET 1:
+        RAW:
+                New Sticker                 Old Sticker
+        10cm    0                         0
+        20cm    0                         0
+        30cm    0                         0
+        40cm    0                         0
+        CM:
+                New Sticker                 Old Sticker
+        10cm    0                         0
+        20cm    0                         0
+        30cm    0                         0
+        40cm    0                         0

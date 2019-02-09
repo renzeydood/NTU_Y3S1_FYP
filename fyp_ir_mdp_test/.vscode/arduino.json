@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:uno",
+    "port": "COM11",
+    "sketch": "ir_mdp_test.ino",
+    "output": "../arduino_temp"
+}

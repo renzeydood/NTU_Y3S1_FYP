@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:uno",
+    "port": "COM3",
+    "sketch": "testbench_lasertest.ino",
+    "output": "../arduino_temp"
+}

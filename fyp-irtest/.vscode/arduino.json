@@ -1,0 +1,6 @@
+{
+    "board": "arduino:sam:arduino_due_x_dbg",
+    "port": "COM4",
+    "sketch": "fyp-irtest.ino",
+    "output": "../arduino_temp"
+}

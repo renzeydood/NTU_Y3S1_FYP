@@ -1,0 +1,6 @@
+{
+  "board": "arduino:avr:uno",
+  "port": "COM3",
+  "sketch": "fyp_ard_fw_v01.ino",
+  "output": "../ArduinoOutput"
+}

@@ -1,0 +1,16 @@
+// {type:class}
+// {direction:topDown}
+[note: Class Diagram Design for the map components {bg:cornsilk}]
+
+// Classes
+[MapObjects | -xBlkLocation; -yBlkLocation; -imgSrc | +getPosition(); +getImage()] 
+[Robot | -orientation | +robotMoveForward(); +robotMoveBackward(); +robotTurnRight(); +robotTurnLeft();]
+
+//Relationships
+[MapObjects] ^ [Robot]
+[MapObjects] ^ [Start]
+[MapObjects] ^ [Block]
+[MapObjects] ^ [End]
+[MapObjects] ^ [Arrow]
+[MapObjects] ^ [Waypoint]
+[MapObjects] ^ [TrafficLight]
