@@ -29,7 +29,7 @@
             "cStandard": "c11",
             "cppStandard": "c++17",
             "forcedInclude": [
-                "C:\\Users\\Renzey\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.11\\cores\\arduino\\Arduino.h"
+                "C:\\Program Files\\Arduino\\hardware\\arduino\\avr\\cores\\arduino\\Arduino.h"
             ]
         }
     ],

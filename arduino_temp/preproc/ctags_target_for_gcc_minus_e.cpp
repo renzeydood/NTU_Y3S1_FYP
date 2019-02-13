@@ -1,6 +1,8 @@
-#include <Streaming.h>
-#include "message_structure.h"
-#include "DualVNH5019MotorShield.h"
+# 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino"
+# 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino"
+# 2 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino" 2
+# 3 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino" 2
+# 4 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino" 2
 
 DualVNH5019MotorShield md;
 RCVDMessage msgRCVD;
@@ -11,8 +13,8 @@ int send_no = 20;
 void setup()
 {
     Serial.begin(9600);
-    pinMode(13, OUTPUT);
-    digitalWrite(13, LOW);
+    pinMode(13, 0x1);
+    digitalWrite(13, 0x0);
     md.init();
     memset(&msgRCVD, 0, sizeof(RCVDMessage));
     memset(&msgSEND, 0, sizeof(SENDMessage));
@@ -30,12 +32,12 @@ void loop()
 
     if (msgRCVD.distance == 50 && msgRCVD.motorspeed == 400 && msgRCVD.motorangle == 360)
     {
-        digitalWrite(13, HIGH);
+        digitalWrite(13, 0x1);
     }
 
     else if (msgRCVD.distance == 250 && msgRCVD.motorspeed == 100 && msgRCVD.motorangle == 180)
     {
-        digitalWrite(13, LOW);
+        digitalWrite(13, 0x0);
     }
 
     if (send_no > 0)
@@ -94,8 +96,30 @@ void usbReceiveMSG(RCVDMessage *MSG_Buffer)
 
 void usbSendMSG(SENDMessage *MSG_Buffer)
 {
-    byte writebuff[] = {START, MSG_Buffer->type, MSG_Buffer->id, MSG_Buffer->state, highByte(MSG_Buffer->frontDistance), lowByte(MSG_Buffer->frontDistance), highByte(MSG_Buffer->bearings), lowByte(MSG_Buffer->bearings), STOP};
+    byte writebuff[] = {START, MSG_Buffer->type, MSG_Buffer->id, MSG_Buffer->state, ((uint8_t)((MSG_Buffer->frontDistance) >> 8)), ((uint8_t)((MSG_Buffer->frontDistance)&0xff)), ((uint8_t)((MSG_Buffer->bearings) >> 8)), ((uint8_t)((MSG_Buffer->bearings)&0xff)), STOP};
+
+    /* Serial.write(START);
+
+    Serial.println(MSG_Buffer->type);
+
+    Serial.println(MSG_Buffer->id);
+
+    Serial.println(MSG_Buffer->state);
+
+    Serial.println(highByte(MSG_Buffer->frontDistance));
+
+    Serial.println(lowByte(MSG_Buffer->frontDistance));
+
+    Serial.println(highByte(MSG_Buffer->bearings));
+
+    Serial.println(lowByte(MSG_Buffer->bearings));
+
+    Serial.write(STOP); */
+# 108 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino"
     Serial.write(writebuff, 10);
+    //Serial << START << MSG_Buffer->type << MSG_Buffer->id << MSG_Buffer->state << highByte(MSG_Buffer->frontDistance) << lowByte(MSG_Buffer->frontDistance) << highByte(MSG_Buffer->bearings) << lowByte(MSG_Buffer->bearings) << STOP;
+    //Serial.write(START + MSG_Buffer->type + MSG_Buffer->id + MSG_Buffer->state + highByte(MSG_Buffer->frontDistance) + lowByte(MSG_Buffer->frontDistance) + highByte(MSG_Buffer->bearings) + lowByte(MSG_Buffer->bearings) + STOP);
+    //Serial.flush();
 }
 
 void MotorTest()

@@ -18,16 +18,13 @@ class PCInterface:
 
         print("Listening")
 
-    # self.parity= serial.PARITY_ODD
-    # self.bytesize=serial.SEVENBITS
-
     # Start and validate connection to PC
     def connect(self):
-        clientsock, clientaddr = self.serversock.accept()
+        self.clientsock, clientaddr = self.serversock.accept()
         print ("Connection from: " + str(clientaddr))
         while True:
             try:
-                clientsock, clientaddr = self.serversock.accept()
+                self.clientsock, clientaddr = self.serversock.accept()
                 print("Connection from: " + str(clientaddr))
                 return 1
             except:
@@ -39,21 +36,27 @@ class PCInterface:
         received = []
         try:
             data = self.clientsock.recv(1024)
+            if not data:
+                return 0
+            print('From PC:', data)
             for i in range(len(data)):
-                # if new line
-                if (data[i] == 126):
-                    message_end = True
-                    print("Received from TCP: " + str(datetime.datetime.now()))
-                    break
-                received.append(data[i].to_bytes(1, byteorder='big'))
-            return received, message_end
+                if(data[i] == 126 or data[i] == '~'):
+                    print('Terminating char found')
+            #for i in range(len(data)):
+            #    # if new line
+            #    if (data[i] == 126 or data[i] == '~'):
+            #        message_end = True
+            #        print("Received from TCP: " + str(datetime.datetime.now()))
+            #        break
+            #    received.append(data[i].to_bytes(1, byteorder='big'))
+            #return received, message_end
         except:
             return 0
-
+        self.clientsock.close()
 
     # Write message to PC
     def write(self, msg):
-        self.clientsock.sendall(msg.encode("ascii"))
+        self.clientsock.sendall(msg.encode("utf-8"))
 
     def disconnect(self):
         self.serversock.close()

@@ -1,6 +1,6 @@
 {
-    "board": "arduino:sam:arduino_due_x_dbg",
-    "port": "COM6",
+    "board": "arduino:avr:uno",
+    "port": "COM5",
     "sketch": "testbench_rpicomm.ino",
     "output": "../arduino_temp"
 }

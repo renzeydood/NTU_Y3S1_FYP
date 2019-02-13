@@ -1,3 +1,6 @@
+#include <Arduino.h>
+#line 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino"
+#line 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino"
 #include <Streaming.h>
 #include "message_structure.h"
 #include "DualVNH5019MotorShield.h"
@@ -8,6 +11,17 @@ SENDMessage msgSEND;
 
 int send_no = 20;
 
+#line 11 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino"
+void setup();
+#line 27 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino"
+void loop();
+#line 53 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino"
+void usbReceiveMSG(RCVDMessage *MSG_Buffer);
+#line 95 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino"
+void usbSendMSG(SENDMessage *MSG_Buffer);
+#line 114 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino"
+void MotorTest();
+#line 11 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\testbench_rpicomm\\testbench_rpicomm.ino"
 void setup()
 {
     Serial.begin(9600);
@@ -95,7 +109,20 @@ void usbReceiveMSG(RCVDMessage *MSG_Buffer)
 void usbSendMSG(SENDMessage *MSG_Buffer)
 {
     byte writebuff[] = {START, MSG_Buffer->type, MSG_Buffer->id, MSG_Buffer->state, highByte(MSG_Buffer->frontDistance), lowByte(MSG_Buffer->frontDistance), highByte(MSG_Buffer->bearings), lowByte(MSG_Buffer->bearings), STOP};
+
+    /* Serial.write(START);
+    Serial.println(MSG_Buffer->type);
+    Serial.println(MSG_Buffer->id);
+    Serial.println(MSG_Buffer->state);
+    Serial.println(highByte(MSG_Buffer->frontDistance));
+    Serial.println(lowByte(MSG_Buffer->frontDistance));
+    Serial.println(highByte(MSG_Buffer->bearings));
+    Serial.println(lowByte(MSG_Buffer->bearings));
+    Serial.write(STOP); */
     Serial.write(writebuff, 10);
+    //Serial << START << MSG_Buffer->type << MSG_Buffer->id << MSG_Buffer->state << highByte(MSG_Buffer->frontDistance) << lowByte(MSG_Buffer->frontDistance) << highByte(MSG_Buffer->bearings) << lowByte(MSG_Buffer->bearings) << STOP;
+    //Serial.write(START + MSG_Buffer->type + MSG_Buffer->id + MSG_Buffer->state + highByte(MSG_Buffer->frontDistance) + lowByte(MSG_Buffer->frontDistance) + highByte(MSG_Buffer->bearings) + lowByte(MSG_Buffer->bearings) + STOP);
+    //Serial.flush();
 }
 
 void MotorTest()
