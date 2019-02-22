@@ -9,6 +9,7 @@ class Ard_interface():
         self.port = port
         self.baudrate = baudrate
         self.ser = None
+        self.packetcounter = 0;
 
         self.msgRCVD = RCVDMessage()
         self.msgSEND = SENDMessage()
@@ -28,23 +29,18 @@ class Ard_interface():
             print("Connection to Arduino, ", self.port, "failed. Error:", e)
 
     def int_to_bytes(self, data):
-        return bytes([data>>8]) + bytes([data&0xFF])
+        return chr(data>>7) + chr(data&0x7F)
 
-    def bytes_to_int(self, data):
-        return struct.unpack('>h', data)[0]
+    def bytes_to_int(self, u, l):
+        return u<<7 | l
 
     #This fuction should be placed in the remote pc controller, not in RPi
     def usb_send_message(self, data):
-        #msg = START.encode(ARD_ENC) + data[0].encode(ARD_ENC) + bytes([data[1]]) + self.int_to_bytes(data[2]) + self.int_to_bytes(data[3]) + self.int_to_bytes(data[4]) + STOP.encode(ARD_ENC)
-        msg = data
-        #try:
+        msg = (START + data[0] + chr(data[1]) + self.int_to_bytes(data[2]) + self.int_to_bytes(data[3]) + self.int_to_bytes(data[4]) + STOP).encode()
         self.ser.write(msg)
         self.ser.flush()
         print("Message to Arduino sent.")
         print("Message:", msg)
-        #except Exception as e:
-        #    print("Error: " + str(e))
-        #    self.reconnect()
 
     def usb_receive_message(self):
         if(self.ser.inWaiting() > 0):
@@ -55,15 +51,17 @@ class Ard_interface():
                 while True:
                     nextByte = self.ser.read()
                     if(nextByte == bytes(STOP.encode()) and counter == MAX_BYTE_FROM_SERVER-1):
-                        #print(data)
-                        #print(self.bytes_to_int(data[3] + data[4]))
                         return data
                     else:
                         data.append(nextByte)
-                    if(counter == MAX_BYTE_FROM_SERVER-1):
-                        print(data)
                     counter = counter + 1
         return None
+
+    def update_counter(self):
+        if(self.packetcounter <= 127):
+            self.packetcounter = 0
+        else:
+            self.packetcounter = self.packetcounter + 1
 
     def close(self):
         self.ser.close()

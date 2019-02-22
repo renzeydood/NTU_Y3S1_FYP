@@ -1,0 +1,22 @@
+[
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "C:\\Users\\Renzey\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.11\\cores\\arduino"
+  },
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "C:\\Users\\Renzey\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.11\\variants\\arduino_due_x"
+  },
+  {
+    "Sourcefile": "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\ArduinoOutput\\sketch\\fyp_ard_fw_v01.ino.cpp",
+    "Include": "Streaming.h",
+    "Includepath": "C:\\Users\\Renzey\\Workspaces\\Arduino\\libraries\\Streaming"
+  },
+  {
+    "Sourcefile": "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\ArduinoOutput\\sketch\\fyp_ard_fw_v01.ino.cpp",
+    "Include": "",
+    "Includepath": ""
+  }
+]

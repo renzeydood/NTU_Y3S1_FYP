@@ -1,0 +1,80 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "/usr/include",
+                "/usr/local/include",
+                "${workspaceRoot}"
+            ],
+            "defines": [],
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "path": [
+                    "/usr/include",
+                    "/usr/local/include",
+                    "${workspaceRoot}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "macFrameworkPath": [
+                "/System/Library/Frameworks",
+                "/Library/Frameworks"
+            ]
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "/usr/include",
+                "/usr/local/include",
+                "${workspaceRoot}"
+            ],
+            "defines": [],
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "path": [
+                    "/usr/include",
+                    "/usr/local/include",
+                    "${workspaceRoot}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            }
+        },
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceRoot}",
+                "C:\\Program Files\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
+                "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries\\dual-vnh5019-motor-shield-master",
+                "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries\\SharpIR-master",
+                "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries\\Streaming",
+                "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries\\PID",
+                "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries\\CustomMotorLib"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "intelliSenseMode": "msvc-x64",
+            "browse": {
+                "path": [
+                    "${workspaceRoot}",
+                    "C:\\Program Files\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
+                    "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries\\dual-vnh5019-motor-shield-master",
+                    "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries\\SharpIR-master",
+                    "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries\\Streaming",
+                    "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries\\PID",
+                    "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries\\CustomMotorLib"
+                ],
+                "limitSymbolsToIncludedHeaders": false,
+                "databaseFilename": ""
+            },
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
+}

@@ -1,22 +1,10 @@
-#include <Streaming.h>
-#include <SharpIR.h>
-#include <DualVNH5019MotorShield.h>
-#include "communication.h"
-#include "RingBuffer.h"
-#include "Settings.h"
-
-#ifdef DEBUG
-#define D if (1)
-#else
-#define D if (0) //Change this: 1 = Debug mode, 0 = Disable debug prints
-#endif
+#include "settings.h"
 
 void setup()
 {
-    Serial.begin(115200);
-    RingBuffer_init(&usbBufferIn);
-    D Serial.println("Robot: Hello World!");
-    md.init();
+    Serial.begin(9600);
+    //D Serial.println("Robot: Hello World!");
+    //md.init();
 
     //Initialise Motor Encoder Pins, digitalWrite high to enable PullUp Resistors
     pinMode(m1EncA, INPUT);
@@ -24,30 +12,67 @@ void setup()
     pinMode(m2EncA, INPUT);
     pinMode(m2EncB, INPUT);
 
+    pinMode(13, OUTPUT);
+
     //Innitializes the Motor Encoders for Interrupts
-    pciSetup(m1EncA);
+    /* pciSetup(m1EncA);
     pciSetup(m1EncB);
     pciSetup(m2EncA);
-    pciSetup(m2EncB);
+    pciSetup(m2EncB); */
 
-    delay(2000);
-    D Serial.println("Initializations Done");
+    //delay(1000);
+    //D Serial.println("Initializations Done");
+
+    memset(&msgRCVD, 0, sizeof(RCVDMessage));
+    memset(&msgSEND, 0, sizeof(SENDMessage));
+
+    digitalWrite(13, LOW);
+
+    delay(1000);
 }
 
 void loop()
 {
-    if (commands[0] != 0)
+    usbReceiveMSG(&msgRCVD);           //Process incoming message packet
+    char control = char(msgRCVD.type); //Then assign to a variable to control
+
+    switch (control)
     {
-        stringCommands();
-        delay(1000);
+    case 'F':
+        //goFORWARD(blockToTicks(3));
+        msgSEND.type = 'F';
+        msgSEND.state = 'W';
+        usbSendMSG(&msgSEND);
+        break;
+
+    case 'L':
+        //goLEFT(angleToTicks(90));
+        msgSEND.type = 'L';
+        msgSEND.state = 'A';
+        usbSendMSG(&msgSEND);
+        break;
+
+    case 'R':
+        //goRIGHT(angleToTicks(90));
+        msgSEND.type = 'R';
+        msgSEND.state = 'D';
+        usbSendMSG(&msgSEND);
+        break;
+
+    case 'S':
+        //stop();
+        msgSEND.type = 'S';
+        msgSEND.state = 'S';
+        usbSendMSG(&msgSEND);
+        break;
     }
-    else
-    {
-        //commWithRPI();
-    }
+
+    memset(&msgRCVD, 0, sizeof(RCVDMessage)); //Clear received message
+    //usbSendMSG(&msgSEND);
+    delay(1000);
 }
 
-//------------Functions for robot movements------------//
+/* //------------Functions for robot movements------------//
 void goFORWARD(int distance)
 {
     long lastTime = micros();
@@ -59,56 +84,30 @@ void goFORWARD(int distance)
     totalErrors = 0;
     lastTicks[0] = 0;
     lastTicks[1] = 0;
-    //if (!(rfwdIrVal.distance() < 130 || lfwdIrVal.distance() < 130 || mfwdIrVal.distance() < 120))
-    //{
-    int i = 50;
+
     md.setSpeeds(setSpdR, setSpdL);
     lastTime = millis();
 
-    if (distance <= 1500)
+    //if (distance <= 1500)
+    //{
+    while (mCounter[0] < distance && mCounter[1] < distance)
     {
-        while (mCounter[0] < distance && mCounter[1] < distance)
+        if (millis() - lastTime > 100)
         {
-            if (millis() - lastTime > 100)
-            {
-                //if (checkFRONT())
-                //{
-                //    break;
-                //}
-                PIDControl(&setSpdR, &setSpdL, 40, 0, 40, 0); //By block 40, 0, 80, 0
-                lastTime = millis();
-                setSpdR = setSpdR - 1;
-                setSpdL = setSpdL + 1;
-                md.setSpeeds(setSpdR, setSpdL);
-            }
+            //if (checkFRONT())
+            //{
+            //    break;
+            //}
+            PIDControl(&setSpdR, &setSpdL, 40, 0, 40, 0); //By block 40, 0, 80, 0
+            lastTime = millis();
+            //setSpdR = setSpdR - 1;
+            //setSpdL = setSpdL + 1;
+            md.setSpeeds(setSpdR, setSpdL);
         }
     }
-    else
-    {
-        //scanFORWARD(&irFrontReadings[0]);
-        //    while ((mCounter[0] < distance - 445 && mCounter[1] < distance - 445) && ((irFrontReadings[0] > breakDist) || (irFrontReadings[1] > breakDist) || (irFrontReadings[2] > breakDist))){
-        while (mCounter[0] < distance && mCounter[1] < distance)
-        {
-            if ((irFrontReadings[0] < (breakDist + 20)) || (irFrontReadings[1] < breakDist) || (irFrontReadings[2] < (breakDist + 20)))
-            {
-                //          mCounter[0] =  distance - 445;
-                //          mCounter[1] =  distance - 445;                                 //Ends the forward movement and prevents the deleration in belows code
-                break;
-            }
-            //scanFORWARD(&irFrontReadings[0]);
-            if (millis() - lastTime > 100)
-            {
-                PIDControl(&setSpdR, &setSpdL, 20, 0, 40, 0); //Current for 6.20-6.22 Long distance 30, 5, 60 prev
-                lastTime = millis();
-                setSpdR = setSpdR - 1;
-                setSpdL = setSpdL + 1;
-                md.setSpeeds(setSpdR, setSpdL);
-            }
-        }
-    }
-    md.setBrakes(400, 400);
-    resetMCounters();
     //}
+
+    stop();
     delay(100);
 }
 
@@ -125,7 +124,7 @@ void goRIGHT(int angle)
 
     md.setSpeeds(setSpdR, setSpdL);
     delay(50);
-    while (mCounter[0] < angle - turnRightTicks - 200 && mCounter[1] < angle - turnRightTicks - 200)
+    while (mCounter[0] < angle - 200 && mCounter[1] < angle - 200)
     {
         if (millis() - lastTime > 100)
         {
@@ -136,7 +135,7 @@ void goRIGHT(int angle)
     }
     int i = 0;
     lastTime = micros();
-    while (mCounter[0] < angle - turnRightTicks && mCounter[1] < angle - turnRightTicks)
+    while (mCounter[0] < angle && mCounter[1] < angle)
     {
         if (micros() - lastTime > 50)
         {
@@ -164,7 +163,7 @@ void goLEFT(int angle)
     md.setSpeeds(setSpdR, setSpdL);
     delay(50);
 
-    while (mCounter[0] < angle - turnLeftTicks - 200 && mCounter[1] < angle - turnLeftTicks - 200)
+    while (mCounter[0] < angle - 200 && mCounter[1] < angle - 200)
     {
         if (millis() - lastTime > 100)
         {
@@ -175,7 +174,7 @@ void goLEFT(int angle)
     }
     int i = 0;
     lastTime = micros();
-    while (mCounter[0] < angle - turnLeftTicks && mCounter[1] < angle - turnLeftTicks)
+    while (mCounter[0] < angle && mCounter[1] < angle)
     {
         if (micros() - lastTime > 50)
         {
@@ -189,6 +188,12 @@ void goLEFT(int angle)
     md.setBrakes(400, 400);
 }
 
+void stop()
+{
+    resetMCounters();
+    md.setBrakes(400, 400);
+}
+
 //Direction(dr): -1 = left, 0 = straight, 1 = right
 void PIDControl(int *setSpdR, int *setSpdL, int kP, int kI, int kD, int dr)
 {
@@ -199,11 +204,11 @@ void PIDControl(int *setSpdR, int *setSpdL, int kP, int kI, int kD, int dr)
     lastTicks[0] = mCounter[0];
     lastTicks[1] = mCounter[1];
     //totalErrors += 2;
-    totalErrors = 0;
+    //totalErrors = 0;
     //   totalErrors += error             ;                                           //Add up total number of errors (for Ki)
     //  if (error != 0) {                                                           //if error exists
     adjustment = ((kP * error) - (kI * totalErrors) + (kD * errorRate)) / 100;
-    //     adjustment = ((kP * error) + (kI * totalErrors) + (kD * errorRate)) / 100;
+
     if (dr == 1 || dr == -1)
     {
         *setSpdR += -adjustment * dr;
@@ -223,41 +228,6 @@ void PIDControl(int *setSpdR, int *setSpdL, int kP, int kI, int kD, int dr)
             *setSpdL = 400;
         }
     }
-    // }
-    //  Serial << "Adjustment: " << adjustment << endl;
-    //  Serial << "error: " << error << " total error: " << totalErrors << " errorRate: " << errorRate << endl ;
-}
-
-void fwdCorrection()
-{
-    static int fwdCounter = 0;
-    //int pullDist = ((mCounter[0] - mCounter[1])*1)/1 + (offsetOrientation*2);
-    int pullDist = ((mCounter[0] - mCounter[1]) * 1) / 1;
-    resetMCounters();
-
-    scanRIGHT(&irRightReadings[0]);
-
-    if (fwdCounter == 3)
-    {
-        if (pullDist > 0)
-        {
-            while (mCounter[0] < abs(pullDist))
-            { //Right motor pull back
-                md.setM1Speed(-350);
-            }
-        }
-
-        //if(pullDist < 0){
-        //while(mCounter[1] < abs(pullDist)){         //Left motor pull back
-        //md.setM2Speed(-350);
-        //}
-        //}
-
-        fwdCounter = 0;
-    }
-    fwdCounter++;
-
-    md.setBrakes(400, 400);
 }
 
 int angleToTicks(long angle)
@@ -265,49 +235,20 @@ int angleToTicks(long angle)
     if (angle == 90)
         return 16800 * angle / 1000;
     else
-        return (17280 * angle / 1000) - aboutTurnOffset;
+        return (17280 * angle / 1000);
 }
 
 int blockToTicks(int blocks)
 {
-    if (blocks == 1)
-        if (forwardOffsetCounter > 0)
-            return (ticksToMove - forwardOffsetTicks) * blocks;
-        else
-            return 1200 * blocks;
-    else
-        return 1192 * blocks; //1192 * blocks;
+    return 1192 * blocks; //1192 * blocks;
 }
 
 //------------Functions for IR Sensors------------//
-void scanFORWARD(int *pData)
+void scanFORWARD()
 {
-    pData[0] = lfwdIrVal.distance(); //Left
+    int val = mfwdIrVal.distance(); // Middle
     delay(2);
-    pData[1] = mfwdIrVal.distance(); // Middle
-    delay(2);
-    pData[2] = rfwdIrVal.distance(); //Right
-    delay(2);
-    D Serial << "FORWARD: <- Left: " << pData[0] << " () Mid: " << pData[1] << " -> Right: " << pData[2] << " \n"
-             << endl;
-}
-
-void scanRIGHT(int *pData)
-{
-    pData[0] = frgtIrVal.distance(); //Right Front
-    delay(2);
-    pData[1] = brgtIrVal.distance(); //Right Back
-    delay(2);
-    D Serial << "RIGHT: -> Right(Short): " << pData[0] << " -> Right(Long): " << pData[1] << " \n"
-             << endl;
-}
-
-void scanLEFT()
-{
-    irLeftReading = flftIrVal.distance();
-    delay(2);
-    D Serial << "LEFT: <- Left(Long): " << irLeftReading << " \n"
-             << endl;
+    D Serial << "FORWARD: () Mid: " << val << endl;
 }
 
 //------------Functions for Motors------------//
@@ -335,11 +276,11 @@ void pciSetup(byte pin)
     *digitalPinToPCMSK(pin) |= bit(digitalPinToPCMSKbit(pin)); // enable pin
     PCIFR |= bit(digitalPinToPCICRbit(pin));                   // clear any outstanding interrupt
     PCICR |= bit(digitalPinToPCICRbit(pin));                   // enable interrupt for the group
-}
+} */
 
 //------------Functions for communications------------//
 
-void stringCommands()
+/* void stringCommands(int *commands)
 {
     static int calCounter = 0;
     static int x;
@@ -348,45 +289,71 @@ void stringCommands()
     case 1:
         Serial.println("Moving forward");
         goFORWARD(blockToTicks(1));
-        mvmtCounter[0]++;
-        calCounter++;
-        break;
-
-    case 2:
-        Serial.println("Moving left");
-        goLEFT(angleToTicks(90));
-        calCounter++;
-        break;
-
-    case 3:
-        Serial.println("Moving right");
-        goRIGHT(angleToTicks(90));
-        calCounter++;
-        break;
-
-    case 5:
-        Serial.println("Doing Full Scan");
-        scanFORWARD(&irFrontReadings[0]);
-        scanLEFT();
-        scanRIGHT(&irRightReadings[0]);
-        break;
-
-    case 7:
-        Serial.println("About Turn");
-        goLEFT(angleToTicks(180));
-        calCounter++;
-        break;
-
-    case 8:
-        Serial.println("Forward burst");
-        goFORWARD(blockToTicks(commands[++x]));
-        calCounter++;
         break;
     }
-    delay(commandsDelay);
 
     if (x <= sizeof(commands) / sizeof(int))
     {
         x++;
     }
+} */
+
+void usbReceiveMSG(RCVDMessage *MSG_Buffer)
+{
+    static uint8_t tempBuffer[MAX_BYTE_DATA];
+    static uint8_t tempByte = 0;
+    static int index = 0;
+    static boolean recieving = false;
+
+    while (Serial.available() > 0 && index < MAX_BYTE_DATA + 1) //Total index + STOP byte
+    {
+        tempByte = Serial.read();
+        //Serial.println(tempByte);
+
+        if (recieving == true)
+        {
+            if (tempByte != STOP)
+            {
+                tempBuffer[index] = tempByte;
+                index++;
+            }
+
+            else
+            {
+                recieving = false;
+                index = 0;
+
+                MSG_Buffer->type = tempBuffer[0];
+                MSG_Buffer->id = tempBuffer[1];
+                MSG_Buffer->distance = ((uint16_t)tempBuffer[2] << 7) | tempBuffer[3];
+                MSG_Buffer->motorspeed = ((uint16_t)tempBuffer[4] << 7) | tempBuffer[5];
+                MSG_Buffer->motorangle = ((uint16_t)tempBuffer[6] << 7) | tempBuffer[7];
+
+                digitalWrite(13, HIGH);
+            }
+        }
+
+        else if (tempByte == START)
+        {
+            recieving = true;
+        }
+
+        delay(5);
+    }
+}
+
+void usbSendMSG(SENDMessage *MSG_Buffer)
+{
+    byte writebuff[] = {START, MSG_Buffer->type, MSG_Buffer->id, MSG_Buffer->state, highByte(MSG_Buffer->frontDistance), lowByte(MSG_Buffer->frontDistance), highByte(MSG_Buffer->bearings), lowByte(MSG_Buffer->bearings), STOP};
+    Serial.write(writebuff, 9);
+    //Serial << char(START) << char(MSG_Buffer->type) << char(MSG_Buffer->id) << char(MSG_Buffer->state) << char(STOP);
+    /* Serial.println("--SENDMESSAGE--");
+    Serial.println(START);
+    Serial.println(MSG_Buffer->type);
+    Serial.println(MSG_Buffer->id);
+    Serial.println(MSG_Buffer->state);
+    Serial.println(MSG_Buffer->frontDistance);
+    Serial.println(MSG_Buffer->bearings);
+    Serial.println(STOP);
+    Serial.println("----"); */
 }

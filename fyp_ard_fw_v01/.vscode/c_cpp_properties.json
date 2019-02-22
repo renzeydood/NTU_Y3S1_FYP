@@ -45,6 +45,8 @@
         {
             "name": "Win32",
             "includePath": [
+                "C:\\Users\\Renzey\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\**",
+                "C:\\Users\\Renzey\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.11\\**",
                 "${workspaceRoot}",
                 "C:\\Program Files\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
                 "C:\\Users\\Renzeydood\\Documents\\Arduino\\libraries\\dual-vnh5019-motor-shield-master",
@@ -73,7 +75,10 @@
                 "databaseFilename": ""
             },
             "cStandard": "c11",
-            "cppStandard": "c++17"
+            "cppStandard": "c++17",
+            "forcedInclude": [
+                "C:\\Users\\Renzey\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\sam\\1.6.11\\cores\\arduino\\Arduino.h"
+            ]
         }
     ],
     "version": 4
