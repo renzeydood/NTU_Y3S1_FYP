@@ -1,83 +1,53 @@
-#include "settings.h"
+# 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+# 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+# 2 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 2
 
 void setup()
 {
     Serial.begin(9600);
     //D Serial.println("Robot: Hello World!");
-    //md.init();
+    md.init();
 
     //Initialise Motor Encoder Pins, digitalWrite high to enable PullUp Resistors
-    pinMode(m1EncA, INPUT);
-    pinMode(m1EncB, INPUT);
-    pinMode(m2EncA, INPUT);
-    pinMode(m2EncB, INPUT);
-
-    pinMode(13, OUTPUT);
+    pinMode(3 /*Microcontroller pin 5, PORTD, PCINT2_vect, PCINT19*/, 0x0);
+    pinMode(5 /*Microcontroller pin 11, PORTD,PCINT2_vect, PCINT21*/, 0x0);
+    pinMode(13 /*Microcontroller pin 17, PORTB, PCINT0_vect, PCINT3*/, 0x0);
+    pinMode(11 /*Microcontroller pin 19, PORTB, PCINT0_vect, PCINT5*/, 0x0);
 
     //Innitializes the Motor Encoders for Interrupts
-    /* pciSetup(m1EncA);
-    pciSetup(m1EncB);
-    pciSetup(m2EncA);
-    pciSetup(m2EncB); */
+    pciSetup(3 /*Microcontroller pin 5, PORTD, PCINT2_vect, PCINT19*/);
+    pciSetup(5 /*Microcontroller pin 11, PORTD,PCINT2_vect, PCINT21*/);
+    pciSetup(13 /*Microcontroller pin 17, PORTB, PCINT0_vect, PCINT3*/);
+    pciSetup(11 /*Microcontroller pin 19, PORTB, PCINT0_vect, PCINT5*/);
 
-    //delay(1000);
-    //D Serial.println("Initializations Done");
+    delay(1000);
+    if (0) /*Change this: 1 = Debug mode, 0 = Disable debug prints*/ Serial.println("Initializations Done");
 
     memset(&msgRCVD, 0, sizeof(RCVDMessage));
     memset(&msgSEND, 0, sizeof(SENDMessage));
-
-    digitalWrite(13, LOW);
 
     delay(1000);
 }
 
 void loop()
 {
-    usbReceiveMSG(&msgRCVD);           //Process incoming message packet
-    char control = char(msgRCVD.type); //Then assign to a variable to control
-
-    switch (control)
+    Serial.println(sizeof(commands));
+    if (commands[0] != '0')
     {
-    case 'F':
-        //goFORWARD(blockToTicks(3));
-        msgSEND.type = 'F';
-        msgSEND.state = 'W';
-        usbSendMSG(&msgSEND);
-        break;
-
-    case 'L':
-        //goLEFT(angleToTicks(90));
-        msgSEND.type = 'L';
-        msgSEND.state = 'A';
-        usbSendMSG(&msgSEND);
-        break;
-
-    case 'R':
-        //goRIGHT(angleToTicks(90));
-        msgSEND.type = 'R';
-        msgSEND.state = 'D';
-        usbSendMSG(&msgSEND);
-        break;
-
-    case 'S':
-        //stop();
-        msgSEND.type = 'S';
-        msgSEND.state = 'S';
-        usbSendMSG(&msgSEND);
-        break;
+        stringCommands(commands, sizeof(commands) / sizeof(char));
     }
-
-    memset(&msgRCVD, 0, sizeof(RCVDMessage)); //Clear received message
-    //usbSendMSG(&msgSEND);
-    delay(1000);
+    else
+    {
+        rpiCommunication();
+    }
 }
 
-/* //------------Functions for robot movements------------//
-void goFORWARD(int distance)
+//------------Functions for robot movements------------//
+void mvmtFORWARD(int distance)
 {
     long lastTime = micros();
-    int setSpdR = 380; //400;                //Original: 300
-    int setSpdL = 400; //400;                //Original: 300
+    //int setSpdR = 400; //400;                //Original: 300
+    //int setSpdL = 400; //400;                //Original: 300
     int colCounter = 0;
     resetMCounters();
     lastError = 0;
@@ -88,16 +58,10 @@ void goFORWARD(int distance)
     md.setSpeeds(setSpdR, setSpdL);
     lastTime = millis();
 
-    //if (distance <= 1500)
-    //{
     while (mCounter[0] < distance && mCounter[1] < distance)
     {
         if (millis() - lastTime > 100)
         {
-            //if (checkFRONT())
-            //{
-            //    break;
-            //}
             PIDControl(&setSpdR, &setSpdL, 40, 0, 40, 0); //By block 40, 0, 80, 0
             lastTime = millis();
             //setSpdR = setSpdR - 1;
@@ -105,16 +69,15 @@ void goFORWARD(int distance)
             md.setSpeeds(setSpdR, setSpdL);
         }
     }
-    //}
 
-    stop();
-    delay(100);
+    //mvmtSTOP();
+    //delay(100);
 }
 
-void goRIGHT(int angle)
+void mvmtRIGHT(int angle)
 {
     int setSpdR = -400; //Right motor
-    int setSpdL = 400;  //Left motor
+    int setSpdL = 400; //Left motor
     long lastTime = millis();
     lastError = 0;
     totalErrors = 0;
@@ -149,9 +112,9 @@ void goRIGHT(int angle)
     md.setBrakes(400, 400);
 }
 
-void goLEFT(int angle)
+void mvmtLEFT(int angle)
 {
-    int setSpdR = 400;  //Right motor
+    int setSpdR = 400; //Right motor
     int setSpdL = -400; //Left motor
     long lastTime = millis();
     lastError = 0;
@@ -188,10 +151,12 @@ void goLEFT(int angle)
     md.setBrakes(400, 400);
 }
 
-void stop()
+void mvmtSTOP()
 {
+    setSpdL = 0;
+    setSpdR = 0;
     resetMCounters();
-    md.setBrakes(400, 400);
+    md.setBrakes(0, 0);
 }
 
 //Direction(dr): -1 = left, 0 = straight, 1 = right
@@ -244,12 +209,14 @@ int blockToTicks(int blocks)
 }
 
 //------------Functions for IR Sensors------------//
+/*
 void scanFORWARD()
 {
     int val = mfwdIrVal.distance(); // Middle
     delay(2);
     D Serial << "FORWARD: () Mid: " << val << endl;
 }
+*/
 
 //------------Functions for Motors------------//
 void resetMCounters()
@@ -259,13 +226,21 @@ void resetMCounters()
 }
 
 //ISR for Motor 1 (Right) Encoders
-ISR(PCINT2_vect)
+
+# 227 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+extern "C" void __vector_5 /* Pin Change Interrupt Request 1 */ (void) __attribute__ ((signal,used, externally_visible)) ; void __vector_5 /* Pin Change Interrupt Request 1 */ (void)
+
+# 228 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
 {
     mCounter[0]++;
 }
 
 //ISR for Motor 2 (Left) Encoders
-ISR(PCINT0_vect)
+
+# 233 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+extern "C" void __vector_3 /* Pin Change Interrupt Request 0 */ (void) __attribute__ ((signal,used, externally_visible)) ; void __vector_3 /* Pin Change Interrupt Request 0 */ (void)
+
+# 234 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
 {
     mCounter[1]++;
 }
@@ -273,30 +248,32 @@ ISR(PCINT0_vect)
 //Standard function to enable interrupts on any pins
 void pciSetup(byte pin)
 {
-    *digitalPinToPCMSK(pin) |= bit(digitalPinToPCMSKbit(pin)); // enable pin
-    PCIFR |= bit(digitalPinToPCICRbit(pin));                   // clear any outstanding interrupt
-    PCICR |= bit(digitalPinToPCICRbit(pin));                   // enable interrupt for the group
-} */
+    *(((pin) <= 7) ? (&
+# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+    (*(volatile uint8_t *)(0x6D))
+# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+    ) : (((pin) <= 13) ? (&
+# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+    (*(volatile uint8_t *)(0x6B))
+# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+    ) : (((pin) <= 21) ? (&
+# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+    (*(volatile uint8_t *)(0x6C))
+# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+    ) : ((uint8_t *)0)))) |= (1UL << ((((pin) <= 7) ? (pin) : (((pin) <= 13) ? ((pin) - 8) : ((pin) - 14))))); // enable pin
+    
+# 242 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+   (*(volatile uint8_t *)((0x1B) + 0x20)) 
+# 242 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+         |= (1UL << ((((pin) <= 7) ? 2 : (((pin) <= 13) ? 0 : 1)))); // clear any outstanding interrupt
+    
+# 243 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+   (*(volatile uint8_t *)(0x68)) 
+# 243 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+         |= (1UL << ((((pin) <= 7) ? 2 : (((pin) <= 13) ? 0 : 1)))); // enable interrupt for the group
+}
 
 //------------Functions for communications------------//
-
-/* void stringCommands(int *commands)
-{
-    static int calCounter = 0;
-    static int x;
-    switch (commands[x])
-    {
-    case 1:
-        Serial.println("Moving forward");
-        goFORWARD(blockToTicks(1));
-        break;
-    }
-
-    if (x <= sizeof(commands) / sizeof(int))
-    {
-        x++;
-    }
-} */
 
 void usbReceiveMSG(RCVDMessage *MSG_Buffer)
 {
@@ -329,7 +306,7 @@ void usbReceiveMSG(RCVDMessage *MSG_Buffer)
                 MSG_Buffer->motorspeed = ((uint16_t)tempBuffer[4] << 7) | tempBuffer[5];
                 MSG_Buffer->motorangle = ((uint16_t)tempBuffer[6] << 7) | tempBuffer[7];
 
-                digitalWrite(13, HIGH);
+                digitalWrite(13, 0x1);
             }
         }
 
@@ -344,7 +321,7 @@ void usbReceiveMSG(RCVDMessage *MSG_Buffer)
 
 void usbSendMSG(SENDMessage *MSG_Buffer)
 {
-    byte writebuff[] = {START, MSG_Buffer->type, MSG_Buffer->id, MSG_Buffer->state, highByte(MSG_Buffer->frontDistance), lowByte(MSG_Buffer->frontDistance), highByte(MSG_Buffer->bearings), lowByte(MSG_Buffer->bearings), STOP};
+    byte writebuff[] = {START, MSG_Buffer->type, MSG_Buffer->id, MSG_Buffer->state, ((uint8_t)((MSG_Buffer->frontDistance) >> 7)), ((uint8_t)((MSG_Buffer->frontDistance)&0x7f)), ((uint8_t)((MSG_Buffer->bearings) >> 7)), ((uint8_t)((MSG_Buffer->bearings)&0x7f)), STOP};
     Serial.write(writebuff, 9);
     //Serial << char(START) << char(MSG_Buffer->type) << char(MSG_Buffer->id) << char(MSG_Buffer->state) << char(STOP);
     /* Serial.println("--SENDMESSAGE--");
@@ -356,4 +333,86 @@ void usbSendMSG(SENDMessage *MSG_Buffer)
     Serial.println(MSG_Buffer->bearings);
     Serial.println(STOP);
     Serial.println("----"); */
+}
+
+void rpiCommunication()
+{
+    usbReceiveMSG(&msgRCVD); //Process incoming message packet
+    char control = char(msgRCVD.type); //Then assign to a variable to control
+
+    switch (control)
+    {
+    case 'F':
+        //goFORWARD(blockToTicks(3));
+        msgSEND.type = 'F';
+        msgSEND.state = 'W';
+        usbSendMSG(&msgSEND);
+        break;
+
+    case 'L':
+        //goLEFT(angleToTicks(90));
+        msgSEND.type = 'L';
+        msgSEND.state = 'A';
+        usbSendMSG(&msgSEND);
+        break;
+
+    case 'R':
+        //goRIGHT(angleToTicks(90));
+        msgSEND.type = 'R';
+        msgSEND.state = 'D';
+        usbSendMSG(&msgSEND);
+        break;
+
+    case 'S':
+        //stop();
+        msgSEND.type = 'S';
+        msgSEND.state = 'S';
+        usbSendMSG(&msgSEND);
+        break;
+    }
+
+    memset(&msgRCVD, 0, sizeof(RCVDMessage)); //Clear received message
+    //usbSendMSG(&msgSEND);
+    delay(RPI_DELAY);
+}
+
+void stringCommands(char commands[], int len)
+{
+    static int calCounter = 0;
+    static int x;
+
+    Serial.println(sizeof(commands));
+
+    switch (commands[x])
+    {
+    case 'f':
+        if (setSpdL != 0 && setSpdR != 0)
+        {
+            setSpdL = 400;
+            setSpdR = 400;
+        }
+        //mvmtFORWARD(blockToTicks(1));
+        break;
+
+    case 'l':
+        break;
+
+    case 'r':
+        break;
+
+    case 's':
+        mvmtSTOP();
+        break;
+
+    default:
+        mvmtSTOP();
+        break;
+    }
+
+    delay(ARD_DELAY);
+
+    if (x <= len)
+    {
+        x++;
+    }
 }

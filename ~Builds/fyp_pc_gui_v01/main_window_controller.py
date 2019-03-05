@@ -28,12 +28,8 @@ class Window(QMainWindow):
         self.scene = DisplayScene()
 
 
-        self.scene.setSceneRect(0, 0, 1050, 1400)
+        self.scene.setSceneRect(0, 0, 500, 500)
 
-        self.board = Board(self.scene, 15, 20, 70)
-        self.robot = Robot(self.scene, 3, 3, 0, 1190)
-
-        self.scene.addBoardObject(self.board)
 
         self.view_Map.setScene(self.scene)
     #end
@@ -49,7 +45,6 @@ class Window(QMainWindow):
     #end
 
     def btn_Down_Clicked(self):
-        self.board.getArray()
         self.tBox_Logs.append("Move backward")
     #end
 

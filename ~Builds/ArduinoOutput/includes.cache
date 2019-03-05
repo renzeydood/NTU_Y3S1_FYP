@@ -1,0 +1,32 @@
+[
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "C:\\Program Files\\Arduino\\hardware\\arduino\\avr\\cores\\arduino"
+  },
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "C:\\Program Files\\Arduino\\hardware\\arduino\\avr\\variants\\standard"
+  },
+  {
+    "Sourcefile": "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\ArduinoOutput\\sketch\\fyp_ard_fw_v01.ino.cpp",
+    "Include": "Streaming.h",
+    "Includepath": "C:\\Users\\Renzey\\Workspaces\\Arduino\\libraries\\Streaming"
+  },
+  {
+    "Sourcefile": "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\ArduinoOutput\\sketch\\fyp_ard_fw_v01.ino.cpp",
+    "Include": "DualVNH5019MotorShield.h",
+    "Includepath": "C:\\Users\\Renzey\\Workspaces\\Arduino\\libraries\\dual-vnh5019-motor-shield-master"
+  },
+  {
+    "Sourcefile": "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\ArduinoOutput\\sketch\\fyp_ard_fw_v01.ino.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "C:\\Users\\Renzey\\Workspaces\\Arduino\\libraries\\dual-vnh5019-motor-shield-master\\DualVNH5019MotorShield.cpp",
+    "Include": "",
+    "Includepath": ""
+  }
+]

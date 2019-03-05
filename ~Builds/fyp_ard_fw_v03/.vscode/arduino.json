@@ -1,6 +1,6 @@
 {
   "board": "arduino:avr:uno",
   "port": "COM5",
-  "sketch": "fyp_ard_fw_v02.ino",
+  "sketch": "fyp_ard_fw_v03.ino",
   "output": "../ArduinoOutput"
 }
