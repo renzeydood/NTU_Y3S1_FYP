@@ -1,15 +1,18 @@
-import bluetooth
+from bluetooth import *
+import time as t
+import sys
 
 #hostMAC = '98:d3:32:10:d7:66'
 #hostName = 'EOG_TRANSMITTER'
 hostMAC = ''
 hostName = ''
-port = 3 
+port = 8		#8=incoming, 9=outgoing
 backlog = 1
 size = 1024
 
-nearby_devices = bluetooth.discover_devices(lookup_names=True)
+nearby_devices = discover_devices(lookup_names=True)
 print("found %d devices" % len(nearby_devices))
+
 
 for addr, name in nearby_devices:
     if name == "EOG_TRANSMITTER":
@@ -19,18 +22,17 @@ for addr, name in nearby_devices:
         hostName = name
         break
 
-s = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-s.bind((hostMAC, port))
-s.listen(backlog)
-try:
-	client, clientInfo = s.accept()
-	while 1:
-		data = client.recv(size)
-		if data:
-			print(data)
-			client.send(data) # Echo back to client
-except:	
-	print("Closing socket")
-	client.close()
-s.close()
+print(find_service())
 
+s = BluetoothSocket(RFCOMM)
+s.connect((hostMAC, port))
+
+message = '1'
+s.send(message)
+
+while True:
+	data = s.recv(1024)
+	print('Received', 'data')
+	t.sleep(1)
+
+s.close()

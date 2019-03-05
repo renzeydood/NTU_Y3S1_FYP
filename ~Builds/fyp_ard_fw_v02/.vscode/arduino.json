@@ -1,0 +1,6 @@
+{
+    "board": "arduino:sam:arduino_due_x_dbg",
+    "port": "COM6",
+    "sketch": "fyp_ard_fw_v01.ino",
+    "output": "../ArduinoOutput"
+}

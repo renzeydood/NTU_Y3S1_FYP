@@ -4,27 +4,31 @@ import time
 import numpy as np
 import math
 from Shapes import Shapes
+from colordetector import ColorDetector
 
 class CameraManager():
 
     def __init__(self, img=None):
         self.image = cv2.imread(img)
+        self.image = imutils.resize(self.image, height=300)
+        self.cd = ColorDetector()
 
     def loadImage(self, img):
         self.image = cv2.imread(img)
 
-    def displayFrame(self):
-        cv2.imshow("Image:", self.image)
+    def displayFrame(self, image):
+        cv2.imshow("Image:", image)
         cv2.waitKey(0)
 
     def drawShapes(self, shape):
         label = shape.getType if shape.getOrientation() == None else shape.getType() + ": " + shape.getOrientation()
         c = shape.getContour()
+        color = self.cd.label(self.image, c)
         cv2.drawContours(self.image, [c], -1, (0, 255, 0), 3)
-        cv2.putText(self.image, str(label), (c[0][0][0] - 100, c[0][0][1] - 35), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
+        cv2.putText(self.image, str(label + color), (c[0][0][0] - 100, c[0][0][1] - 35), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1)
 
     def checkInRange(self, value, lower, upper):
-        if lower <= value <= upper :
+        if lower <= value <= upper:
             return True
         return False
 
@@ -93,13 +97,41 @@ class CameraManager():
     #======================Finding shapes in image frame============================
     #Function will return a list of shapes found in image frame
 
-    def displayFiltered(self):
-        gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-        #thresh = cv2.threshold(blurred, 150, 255, cv2.THRESH_BINARY)[1]#60
-        thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
-        self.image = thresh
-        self.displayFrame()
+    def displayFiltered(self, select="Gray"):
+        filters = {}
+        output = self.image.copy()
+
+        filters["Original"] = output
+        filters["Blur"] = cv2.GaussianBlur(output, (3, 3), 0)
+        filters["Gray"] = cv2.cvtColor(filters["Blur"], cv2.COLOR_BGR2GRAY)
+        filters["Thresh"] = cv2.threshold(filters["Gray"], 115, 255, cv2.THRESH_BINARY)[1]#60
+        filters["Thresh-Adaptive"] = cv2.adaptiveThreshold(filters["Gray"], 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,2)
+        filters["Canny"] = cv2.Canny(filters["Blur"], 100, 200)
+        filters["Canny-Auto"] = imutils.auto_canny(filters["Blur"])
+
+        output = filters[select]
+
+        kernel = np.ones((3,3),np.uint8)
+        #dilation = cv2.dilate(output, kernel, iterations=1)
+        cl1 = cv2.morphologyEx(output, cv2.MORPH_CLOSE, kernel)
+        closing = cv2.morphologyEx(output, cv2.MORPH_CLOSE, kernel)
+
+        self.displayFrame(closing)
+
+        return filters[select]
+
+    def displayContours(self, filtered):
+        cnts = cv2.findContours(filtered, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
+        output = self.image.copy()
+
+        print(len(cnts)) #returns the number of contours found
+        for c in cnts:
+            if cv2.contourArea(c) > 110 and cv2.contourArea(c) < 10000:
+                print("Area of contour: ", cv2.contourArea(c))
+                cv2.drawContours(output, [c], -1, (240, 0, 159), 2)
+                cv2.imshow("Contours", output)
+                cv2.waitKey(0)
 
     def boundROI(self):
         (h, w, d) = self.image.shape
@@ -156,9 +188,8 @@ class CameraManager():
             cv2.drawContours(self.image, [c], -1, (0, 255, 0), 2)
             cv2.imshow("Image", self.image)
 
-            cv2.circle(self.image, (cX, cY), 7, (255, 255, 255), -1)
+            cv2.circle(self.image, (cX, cY), 7, (255, 0, 0), -1)
 
-            cv2.waitKey(0)
+            #cv2.waitKey(0)
 
         return shapes
-

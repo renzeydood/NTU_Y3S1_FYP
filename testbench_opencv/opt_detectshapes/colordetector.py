@@ -8,7 +8,8 @@ class ColorDetector:
         colors = OrderedDict({
             "red": (255, 0, 0),
             "green": (0, 255, 0),
-            "blue": (0, 0, 255)
+            "blue": (0, 0, 255),
+            "yellow": (255, 255, 0)
         })
 
         self.lab = np.zeros((len(colors), 1, 3), dtype="uint8")
