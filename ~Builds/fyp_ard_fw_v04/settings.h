@@ -31,15 +31,24 @@ SENDMessage msgSEND;
 //---------------------Global Variables---------------------//
 volatile int mCounter[2] = {0, 0}; //[0]right, [1]left, used for encoder tick values
 
+static int MAXSPEED_L = 350;
+static int MAXSPEED_R = 350;
+
 //Variables for PID to work
 int lastTicks[2] = {0, 0};
 int lastError;
 int totalErrors;
 
-int setSpdR = 400; //400;                //Original: 300
-int setSpdL = 400; //400;                //Original: 300
+int setSpdR = 0; //400;                //Original: 300
+int setSpdL = 0; //400;                //Original: 300
+
+int turnOffset = 400;
+int turnOffsetStatic = -200;
 
 //---------------------Communication related Variables.---------------------//
-static int RPI_DELAY = 500;
+static int RPI_DELAY = 50;
 static int ARD_DELAY = 0;
-static char commands[] = {'f', 'f', 'f', 'f', 's', 0};
+static char commands[] =
+    {'0'};
+//{'r', 's', 'r', 's'};
+//{'f', 'f', 'r', 'f', 'f', 'r', 'f', 'f', 'l', 's', 's' 'r', 'r', 0};

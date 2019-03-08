@@ -5,6 +5,7 @@ void setup()
     Serial.begin(9600);
     //D Serial.println("Robot: Hello World!");
     md.init();
+    diffPID.SetMode(AUTOMATIC);
 
     //Initialise Motor Encoder Pins, digitalWrite high to enable PullUp Resistors
     pinMode(m1EncA, INPUT);
@@ -29,7 +30,6 @@ void setup()
 
 void loop()
 {
-    Serial.println(sizeof(commands));
     if (commands[0] != '0')
     {
         stringCommands(commands, sizeof(commands) / sizeof(char));
@@ -44,28 +44,33 @@ void loop()
 void mvmtFORWARD(int distance)
 {
     long lastTime = micros();
-    //int setSpdR = 400; //400;                //Original: 300
-    //int setSpdL = 400; //400;                //Original: 300
-    int colCounter = 0;
     resetMCounters();
-    lastError = 0;
-    totalErrors = 0;
-    lastTicks[0] = 0;
-    lastTicks[1] = 0;
 
     md.setSpeeds(setSpdR, setSpdL);
-    lastTime = millis();
+    //lastTime = millis();
 
     while (mCounter[0] < distance && mCounter[1] < distance)
     {
-        if (millis() - lastTime > 100)
-        {
-            PIDControl(&setSpdR, &setSpdL, 40, 0, 40, 0); //By block 40, 0, 80, 0
-            lastTime = millis();
-            //setSpdR = setSpdR - 1;
-            //setSpdL = setSpdL + 1;
-            md.setSpeeds(setSpdR, setSpdL);
+        //if (millis() - lastTime > 100)
+        //{
+        PIDControl(0, 0, 40); //By block 40, 0, 80, 0
+        if (diffIn > 0)
+        { //Right motor slow down
+            setSpdL = (int)(setSpdL + diffOut / 2);
+            setSpdR = (int)(setSpdR - diffOut / 2);
         }
+        else
+        { //Left motor slow down
+            setSpdL = (int)(setSpdL - diffOut / 2);
+            setSpdR = (int)(setSpdR + diffOut / 2);
+        }
+
+        //lastTime = millis();
+        //Serial << "Input: " << diffIn << " Output: " << diffOut << endl;
+        //Serial << "Right:" << setSpdR << " Left: " << setSpdL << endl;
+        Serial.println((int)diffOut);
+        md.setSpeeds(setSpdR, setSpdL);
+        //}
     }
 
     //mvmtSTOP();
@@ -77,10 +82,6 @@ void mvmtRIGHT(int angle)
     int setSpdR = -400; //Right motor
     int setSpdL = 400;  //Left motor
     long lastTime = millis();
-    lastError = 0;
-    totalErrors = 0;
-    lastTicks[0] = 0;
-    lastTicks[1] = 0;
     resetMCounters();
 
     md.setSpeeds(setSpdR, setSpdL);
@@ -89,7 +90,7 @@ void mvmtRIGHT(int angle)
     {
         if (millis() - lastTime > 100)
         {
-            PIDControl(&setSpdR, &setSpdL, 150, 6, 15, 1);
+            //PIDControl(&setSpdR, &setSpdL, 150, 6, 15, 1);
             lastTime = millis();
             md.setSpeeds(setSpdR, setSpdL);
         }
@@ -115,10 +116,6 @@ void mvmtLEFT(int angle)
     int setSpdR = 400;  //Right motor
     int setSpdL = -400; //Left motor
     long lastTime = millis();
-    lastError = 0;
-    totalErrors = 0;
-    lastTicks[0] = 0;
-    lastTicks[1] = 0;
     resetMCounters();
 
     md.setSpeeds(setSpdR, setSpdL);
@@ -128,7 +125,7 @@ void mvmtLEFT(int angle)
     {
         if (millis() - lastTime > 100)
         {
-            PIDControl(&setSpdR, &setSpdL, 150, 6, 15, -1);
+            //PIDControl(&setSpdR, &setSpdL, 150, 6, 15, -1);
             lastTime = millis();
             md.setSpeeds(setSpdR, setSpdL);
         }
@@ -157,40 +154,20 @@ void mvmtSTOP()
     md.setBrakes(0, 0);
 }
 
-//Direction(dr): -1 = left, 0 = straight, 1 = right
-void PIDControl(int *setSpdR, int *setSpdL, int kP, int kI, int kD, int dr)
+void PIDControl(double kP, double kI, double kD)
 {
-    int adjustment;
-    int error = (mCounter[1] - lastTicks[1]) - (mCounter[0] - lastTicks[0]); //0 = right motor, 1 = left motor, lesser tick time mean faster
-    int errorRate = error - lastError;
-    lastError = error;
-    lastTicks[0] = mCounter[0];
-    lastTicks[1] = mCounter[1];
-    //totalErrors += 2;
-    //totalErrors = 0;
-    //   totalErrors += error             ;                                           //Add up total number of errors (for Ki)
-    //  if (error != 0) {                                                           //if error exists
-    adjustment = ((kP * error) - (kI * totalErrors) + (kD * errorRate)) / 100;
+    //mCounter[0] = right, mCounter[1] = left,
+    //If PID result is positive, decrease right,
+    //If PID result is negative, decrease left
+    diffIn = mCounter[0] - mCounter[1];
+    diffSP = 0;
 
-    if (dr == 1 || dr == -1)
+    if (abs(diffIn) > 10)
     {
-        *setSpdR += -adjustment * dr;
-        *setSpdL -= adjustment * dr;
+        diffPID.Compute();
     }
-    else
-    {
-        *setSpdR += adjustment;
-        *setSpdL -= adjustment;
 
-        if (*setSpdR > 400)
-        {
-            *setSpdR = 400;
-        }
-        if (*setSpdL > 400)
-        {
-            *setSpdL = 400;
-        }
-    }
+    //No value to return, since output is global
 }
 
 int angleToTicks(long angle)
@@ -351,17 +328,15 @@ void stringCommands(char commands[], int len)
     static int calCounter = 0;
     static int x;
 
-    Serial.println(sizeof(commands));
-
     switch (commands[x])
     {
     case 'f':
-        if (setSpdL != 0 && setSpdR != 0)
+        if (setSpdL == 0 && setSpdR == 0)
         {
-            setSpdL = 400;
-            setSpdR = 400;
+            setSpdL = 350;
+            setSpdR = 350;
         }
-        //mvmtFORWARD(blockToTicks(1));
+        mvmtFORWARD(blockToTicks(5));
         break;
 
     case 'l':

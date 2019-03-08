@@ -1,6 +1,6 @@
-# 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-# 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-# 2 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 2
+# 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino"
+# 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino"
+# 2 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino" 2
 
 void setup()
 {
@@ -20,26 +20,25 @@ void setup()
     pciSetup(13 /*Microcontroller pin 17, PORTB, PCINT0_vect, PCINT3*/);
     pciSetup(11 /*Microcontroller pin 19, PORTB, PCINT0_vect, PCINT5*/);
 
-    delay(1000);
-    if (0) /*Change this: 1 = Debug mode, 0 = Disable debug prints*/ Serial.println("Initializations Done");
+    //delay(1000);
+    //D Serial.println("Initializations Done");
 
     memset(&msgRCVD, 0, sizeof(RCVDMessage));
     memset(&msgSEND, 0, sizeof(SENDMessage));
 
-    delay(1000);
+    delay(500);
 }
 
 void loop()
 {
-    Serial.println(sizeof(commands));
-    if (commands[0] != '0')
-    {
-        stringCommands(commands, sizeof(commands) / sizeof(char));
-    }
-    else
-    {
-        rpiCommunication();
-    }
+    //if (commands[0] != '0')
+    //{
+    //    stringCommands(commands, sizeof(commands) / sizeof(char));
+    //}
+    //else
+    //{
+    rpiCommunication();
+    //}
 }
 
 //------------Functions for robot movements------------//
@@ -64,20 +63,15 @@ void mvmtFORWARD(int distance)
         {
             PIDControl(&setSpdR, &setSpdL, 40, 0, 40, 0); //By block 40, 0, 80, 0
             lastTime = millis();
-            //setSpdR = setSpdR - 1;
-            //setSpdL = setSpdL + 1;
             md.setSpeeds(setSpdR, setSpdL);
         }
     }
-
-    //mvmtSTOP();
-    //delay(100);
 }
 
-void mvmtRIGHT(int angle)
+void mvmtRIGHTStatic(int angle)
 {
-    int setSpdR = -400; //Right motor
-    int setSpdL = 400; //Left motor
+    int setSpdRi = -400; //Right motor
+    int setSpdLi = 400; //Left motor
     long lastTime = millis();
     lastError = 0;
     totalErrors = 0;
@@ -85,37 +79,26 @@ void mvmtRIGHT(int angle)
     lastTicks[1] = 0;
     resetMCounters();
 
-    md.setSpeeds(setSpdR, setSpdL);
+    md.setSpeeds(setSpdRi, setSpdLi);
     delay(50);
-    while (mCounter[0] < angle - 200 && mCounter[1] < angle - 200)
+
+    while (mCounter[0] < angle && mCounter[1] < angle)
     {
         if (millis() - lastTime > 100)
         {
-            PIDControl(&setSpdR, &setSpdL, 150, 6, 15, 1);
+            PIDControl(&setSpdRi, &setSpdLi, 150, 6, 15, 1);
             lastTime = millis();
-            md.setSpeeds(setSpdR, setSpdL);
+            md.setSpeeds(setSpdRi, setSpdLi);
         }
     }
-    int i = 0;
-    lastTime = micros();
-    while (mCounter[0] < angle && mCounter[1] < angle)
-    {
-        if (micros() - lastTime > 50)
-        {
-            md.setSpeeds(setSpdR + i, setSpdL - i);
-            i++;
-            if (i > 100)
-                i = 100;
-            lastTime = micros();
-        }
-    }
+
     md.setBrakes(400, 400);
 }
 
-void mvmtLEFT(int angle)
+void mvmtLEFTStatic(int angle)
 {
-    int setSpdR = 400; //Right motor
-    int setSpdL = -400; //Left motor
+    int setSpdRi = 400; //Right motor
+    int setSpdLi = -400; //Left motor
     long lastTime = millis();
     lastError = 0;
     totalErrors = 0;
@@ -123,31 +106,19 @@ void mvmtLEFT(int angle)
     lastTicks[1] = 0;
     resetMCounters();
 
-    md.setSpeeds(setSpdR, setSpdL);
+    md.setSpeeds(setSpdRi, setSpdLi);
     delay(50);
 
-    while (mCounter[0] < angle - 200 && mCounter[1] < angle - 200)
+    while (mCounter[0] < angle && mCounter[1] < angle)
     {
         if (millis() - lastTime > 100)
         {
-            PIDControl(&setSpdR, &setSpdL, 150, 6, 15, -1);
+            PIDControl(&setSpdRi, &setSpdLi, 150, 6, 15, -1);
             lastTime = millis();
-            md.setSpeeds(setSpdR, setSpdL);
+            md.setSpeeds(setSpdRi, setSpdLi);
         }
     }
-    int i = 0;
-    lastTime = micros();
-    while (mCounter[0] < angle && mCounter[1] < angle)
-    {
-        if (micros() - lastTime > 50)
-        {
-            md.setSpeeds(setSpdR - i, setSpdL + i);
-            i++;
-            if (i > 100)
-                i = 100;
-            lastTime = micros();
-        }
-    }
+
     md.setBrakes(400, 400);
 }
 
@@ -157,6 +128,27 @@ void mvmtSTOP()
     setSpdR = 0;
     resetMCounters();
     md.setBrakes(0, 0);
+    delay(2000);
+}
+
+void mvmtRIGHT(int angle)
+{
+    md.setM1Brake(0);
+    resetMCounters();
+    while (mCounter[1] < (3012 + turnOffset))
+    {
+        md.setSpeeds(0, setSpdL);
+    }
+}
+
+void mvmtLEFT(int angle)
+{
+    md.setM2Brake(0);
+    resetMCounters();
+    while (mCounter[1] < 3012 + turnOffset)
+    {
+        md.setSpeeds(setSpdR, 0);
+    }
 }
 
 //Direction(dr): -1 = left, 0 = straight, 1 = right
@@ -198,7 +190,7 @@ void PIDControl(int *setSpdR, int *setSpdL, int kP, int kI, int kD, int dr)
 int angleToTicks(long angle)
 {
     if (angle == 90)
-        return 16800 * angle / 1000;
+        return (16800 * angle / 1000) + turnOffsetStatic;
     else
         return (17280 * angle / 1000);
 }
@@ -227,20 +219,20 @@ void resetMCounters()
 
 //ISR for Motor 1 (Right) Encoders
 
-# 227 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+# 219 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino" 3
 extern "C" void __vector_5 /* Pin Change Interrupt Request 1 */ (void) __attribute__ ((signal,used, externally_visible)) ; void __vector_5 /* Pin Change Interrupt Request 1 */ (void)
 
-# 228 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+# 220 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino"
 {
     mCounter[0]++;
 }
 
 //ISR for Motor 2 (Left) Encoders
 
-# 233 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+# 225 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino" 3
 extern "C" void __vector_3 /* Pin Change Interrupt Request 0 */ (void) __attribute__ ((signal,used, externally_visible)) ; void __vector_3 /* Pin Change Interrupt Request 0 */ (void)
 
-# 234 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+# 226 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino"
 {
     mCounter[1]++;
 }
@@ -249,27 +241,27 @@ extern "C" void __vector_3 /* Pin Change Interrupt Request 0 */ (void) __attribu
 void pciSetup(byte pin)
 {
     *(((pin) <= 7) ? (&
-# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+# 233 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino" 3
     (*(volatile uint8_t *)(0x6D))
-# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+# 233 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino"
     ) : (((pin) <= 13) ? (&
-# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+# 233 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino" 3
     (*(volatile uint8_t *)(0x6B))
-# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+# 233 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino"
     ) : (((pin) <= 21) ? (&
-# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+# 233 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino" 3
     (*(volatile uint8_t *)(0x6C))
-# 241 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+# 233 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino"
     ) : ((uint8_t *)0)))) |= (1UL << ((((pin) <= 7) ? (pin) : (((pin) <= 13) ? ((pin) - 8) : ((pin) - 14))))); // enable pin
     
-# 242 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+# 234 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino" 3
    (*(volatile uint8_t *)((0x1B) + 0x20)) 
-# 242 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+# 234 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino"
          |= (1UL << ((((pin) <= 7) ? 2 : (((pin) <= 13) ? 0 : 1)))); // clear any outstanding interrupt
     
-# 243 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino" 3
+# 235 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino" 3
    (*(volatile uint8_t *)(0x68)) 
-# 243 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
+# 235 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v02.ino"
          |= (1UL << ((((pin) <= 7) ? 2 : (((pin) <= 13) ? 0 : 1)))); // enable interrupt for the group
 }
 
@@ -305,8 +297,6 @@ void usbReceiveMSG(RCVDMessage *MSG_Buffer)
                 MSG_Buffer->distance = ((uint16_t)tempBuffer[2] << 7) | tempBuffer[3];
                 MSG_Buffer->motorspeed = ((uint16_t)tempBuffer[4] << 7) | tempBuffer[5];
                 MSG_Buffer->motorangle = ((uint16_t)tempBuffer[6] << 7) | tempBuffer[7];
-
-                digitalWrite(13, 0x1);
             }
         }
 
@@ -343,36 +333,60 @@ void rpiCommunication()
     switch (control)
     {
     case 'F':
-        //goFORWARD(blockToTicks(3));
+        if (setSpdL == 0 && setSpdR == 0)
+        {
+            setSpdL = 350;
+            setSpdR = 350;
+        }
+        mvmtFORWARD(blockToTicks(1));
         msgSEND.type = 'F';
         msgSEND.state = 'W';
         usbSendMSG(&msgSEND);
         break;
 
     case 'L':
-        //goLEFT(angleToTicks(90));
+        if (setSpdL == 0 && setSpdR == 0)
+        {
+            mvmtLEFTStatic(angleToTicks(90));
+        }
+        else
+        {
+            mvmtLEFT(angleToTicks(90));
+        }
         msgSEND.type = 'L';
         msgSEND.state = 'A';
         usbSendMSG(&msgSEND);
         break;
 
     case 'R':
-        //goRIGHT(angleToTicks(90));
+        if (setSpdL == 0 && setSpdR == 0)
+        {
+            mvmtRIGHTStatic(angleToTicks(90));
+        }
+        else
+        {
+            mvmtRIGHT(angleToTicks(90));
+        }
         msgSEND.type = 'R';
         msgSEND.state = 'D';
         usbSendMSG(&msgSEND);
         break;
 
     case 'S':
-        //stop();
+        mvmtSTOP();
         msgSEND.type = 'S';
         msgSEND.state = 'S';
         usbSendMSG(&msgSEND);
         break;
+        //default:
+        //mvmtSTOP();
+        //msgSEND.type = 'S';
+        //msgSEND.state = 'S';
+        //usbSendMSG(&msgSEND);
+        //break;
     }
 
     memset(&msgRCVD, 0, sizeof(RCVDMessage)); //Clear received message
-    //usbSendMSG(&msgSEND);
     delay(RPI_DELAY);
 }
 
@@ -381,23 +395,37 @@ void stringCommands(char commands[], int len)
     static int calCounter = 0;
     static int x;
 
-    Serial.println(sizeof(commands));
-
     switch (commands[x])
     {
     case 'f':
-        if (setSpdL != 0 && setSpdR != 0)
+        if (setSpdL == 0 && setSpdR == 0)
         {
-            setSpdL = 400;
-            setSpdR = 400;
+            setSpdL = 350;
+            setSpdR = 350;
         }
-        //mvmtFORWARD(blockToTicks(1));
+        mvmtFORWARD(blockToTicks(1));
         break;
 
     case 'l':
+        if (setSpdL == 0 && setSpdR == 0)
+        {
+            mvmtLEFTStatic(angleToTicks(90));
+        }
+        else
+        {
+            mvmtLEFT(angleToTicks(90));
+        }
         break;
 
     case 'r':
+        if (setSpdL == 0 && setSpdR == 0)
+        {
+            mvmtRIGHTStatic(angleToTicks(90));
+        }
+        else
+        {
+            mvmtRIGHT(angleToTicks(90));
+        }
         break;
 
     case 's':

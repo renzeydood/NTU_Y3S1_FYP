@@ -1,43 +1,8 @@
-#include <Arduino.h>
-#line 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-#line 1 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
 #include "settings.h"
 
-#line 3 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void setup();
-#line 30 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void loop();
-#line 44 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void mvmtFORWARD(int distance);
-#line 75 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void mvmtRIGHT(int angle);
-#line 113 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void mvmtLEFT(int angle);
-#line 152 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void mvmtSTOP();
-#line 161 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void PIDControl(int *setSpdR, int *setSpdL, int kP, int kI, int kD, int dr);
-#line 196 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-int angleToTicks(long angle);
-#line 204 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-int blockToTicks(int blocks);
-#line 220 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void resetMCounters();
-#line 239 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void pciSetup(byte pin);
-#line 248 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void usbReceiveMSG(RCVDMessage *MSG_Buffer);
-#line 292 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void usbSendMSG(SENDMessage *MSG_Buffer);
-#line 308 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void rpiCommunication();
-#line 349 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
-void stringCommands(char commands[], int len);
-#line 3 "c:\\Users\\Renzey\\Workspaces\\-NTU_FYP_Project_Files\\~Builds\\fyp_ard_fw_v02\\fyp_ard_fw_v01.ino"
 void setup()
 {
     Serial.begin(9600);
-    //D Serial.println("Robot: Hello World!");
     md.init();
 
     //Initialise Motor Encoder Pins, digitalWrite high to enable PullUp Resistors
@@ -52,64 +17,63 @@ void setup()
     pciSetup(m2EncA);
     pciSetup(m2EncB);
 
-    delay(1000);
-    D Serial.println("Initializations Done");
-
     memset(&msgRCVD, 0, sizeof(RCVDMessage));
     memset(&msgSEND, 0, sizeof(SENDMessage));
 
-    delay(1000);
+    delay(500);
 }
 
 void loop()
 {
-    Serial.println(sizeof(commands));
     if (commands[0] != '0')
     {
         stringCommands(commands, sizeof(commands) / sizeof(char));
     }
     else
     {
-        rpiCommunication();
+        //Wait for start event
+        usbReceiveMSG(&msgRCVD);     //Process incoming message packet
+        char c = char(msgRCVD.type); //Then assign to a variable to control
+        rpiCommunication(c);
+        memset(&msgRCVD, 0, sizeof(RCVDMessage)); //Clear received message
+        delay(RPI_DELAY);
     }
 }
 
 //------------Functions for robot movements------------//
-void mvmtFORWARD(int distance)
+void mvmtFORWARD()
 {
     long lastTime = micros();
-    //int setSpdR = 400; //400;                //Original: 300
-    //int setSpdL = 400; //400;                //Original: 300
-    int colCounter = 0;
     resetMCounters();
     lastError = 0;
     totalErrors = 0;
     lastTicks[0] = 0;
     lastTicks[1] = 0;
+
+    if (setSpdL == 0 && setSpdR == 0)
+    {
+        setSpdL = MAXSPEED_L;
+        setSpdR = MAXSPEED_R;
+    }
 
     md.setSpeeds(setSpdR, setSpdL);
     lastTime = millis();
 
-    while (mCounter[0] < distance && mCounter[1] < distance)
+    //while (mCounter[0] < distance && mCounter[1] < distance)
+    //{
+    if (millis() - lastTime > 100)
     {
-        if (millis() - lastTime > 100)
-        {
-            PIDControl(&setSpdR, &setSpdL, 40, 0, 40, 0); //By block 40, 0, 80, 0
-            lastTime = millis();
-            //setSpdR = setSpdR - 1;
-            //setSpdL = setSpdL + 1;
-            md.setSpeeds(setSpdR, setSpdL);
-        }
+        PIDControl(&setSpdR, &setSpdL, 40, 0, 40, 0); //By block 40, 0, 80, 0
+        lastTime = millis();
+        md.setSpeeds(setSpdR, setSpdL);
     }
-
-    //mvmtSTOP();
-    //delay(100);
+    //}
 }
 
-void mvmtRIGHT(int angle)
+void mvmtRIGHTStatic(int angle)
 {
-    int setSpdR = -400; //Right motor
-    int setSpdL = 400;  //Left motor
+    int setSpdRi = -400; //Right motor
+    int setSpdLi = 400;  //Left motor
     long lastTime = millis();
     lastError = 0;
     totalErrors = 0;
@@ -117,37 +81,26 @@ void mvmtRIGHT(int angle)
     lastTicks[1] = 0;
     resetMCounters();
 
-    md.setSpeeds(setSpdR, setSpdL);
+    md.setSpeeds(setSpdRi, setSpdLi);
     delay(50);
-    while (mCounter[0] < angle - 200 && mCounter[1] < angle - 200)
+
+    while (mCounter[0] < angle && mCounter[1] < angle)
     {
         if (millis() - lastTime > 100)
         {
-            PIDControl(&setSpdR, &setSpdL, 150, 6, 15, 1);
+            PIDControl(&setSpdRi, &setSpdLi, 150, 6, 15, 1);
             lastTime = millis();
-            md.setSpeeds(setSpdR, setSpdL);
+            md.setSpeeds(setSpdRi, setSpdLi);
         }
     }
-    int i = 0;
-    lastTime = micros();
-    while (mCounter[0] < angle && mCounter[1] < angle)
-    {
-        if (micros() - lastTime > 50)
-        {
-            md.setSpeeds(setSpdR + i, setSpdL - i);
-            i++;
-            if (i > 100)
-                i = 100;
-            lastTime = micros();
-        }
-    }
+
     md.setBrakes(400, 400);
 }
 
-void mvmtLEFT(int angle)
+void mvmtLEFTStatic(int angle)
 {
-    int setSpdR = 400;  //Right motor
-    int setSpdL = -400; //Left motor
+    int setSpdRi = 400;  //Right motor
+    int setSpdLi = -400; //Left motor
     long lastTime = millis();
     lastError = 0;
     totalErrors = 0;
@@ -155,31 +108,19 @@ void mvmtLEFT(int angle)
     lastTicks[1] = 0;
     resetMCounters();
 
-    md.setSpeeds(setSpdR, setSpdL);
+    md.setSpeeds(setSpdRi, setSpdLi);
     delay(50);
 
-    while (mCounter[0] < angle - 200 && mCounter[1] < angle - 200)
+    while (mCounter[0] < angle && mCounter[1] < angle)
     {
         if (millis() - lastTime > 100)
         {
-            PIDControl(&setSpdR, &setSpdL, 150, 6, 15, -1);
+            PIDControl(&setSpdRi, &setSpdLi, 150, 6, 15, -1);
             lastTime = millis();
-            md.setSpeeds(setSpdR, setSpdL);
+            md.setSpeeds(setSpdRi, setSpdLi);
         }
     }
-    int i = 0;
-    lastTime = micros();
-    while (mCounter[0] < angle && mCounter[1] < angle)
-    {
-        if (micros() - lastTime > 50)
-        {
-            md.setSpeeds(setSpdR - i, setSpdL + i);
-            i++;
-            if (i > 100)
-                i = 100;
-            lastTime = micros();
-        }
-    }
+
     md.setBrakes(400, 400);
 }
 
@@ -189,6 +130,27 @@ void mvmtSTOP()
     setSpdR = 0;
     resetMCounters();
     md.setBrakes(0, 0);
+    delay(2000);
+}
+
+void mvmtRIGHT(int angle)
+{
+    md.setM1Brake(400);
+    resetMCounters();
+    while (mCounter[1] < (3012 + turnOffset))
+    {
+        md.setM2Speed(setSpdL);
+    }
+}
+
+void mvmtLEFT(int angle)
+{
+    md.setM2Brake(400);
+    resetMCounters();
+    while (mCounter[1] < 3012 + turnOffset)
+    {
+        md.setM1Speed(setSpdR);
+    }
 }
 
 //Direction(dr): -1 = left, 0 = straight, 1 = right
@@ -230,7 +192,7 @@ void PIDControl(int *setSpdR, int *setSpdL, int kP, int kI, int kD, int dr)
 int angleToTicks(long angle)
 {
     if (angle == 90)
-        return 16800 * angle / 1000;
+        return (16800 * angle / 1000) + turnOffsetStatic;
     else
         return (17280 * angle / 1000);
 }
@@ -238,6 +200,13 @@ int angleToTicks(long angle)
 int blockToTicks(int blocks)
 {
     return 1192 * blocks; //1192 * blocks;
+}
+
+void spdAdjustment()
+{
+    int speedRate = msgRCVD.motorspeed;
+    setSpdL = ((MAXSPEED_L * speedRate) / 100);
+    setSpdR = ((MAXSPEED_R * speedRate) / 100);
 }
 
 //------------Functions for IR Sensors------------//
@@ -309,8 +278,6 @@ void usbReceiveMSG(RCVDMessage *MSG_Buffer)
                 MSG_Buffer->distance = ((uint16_t)tempBuffer[2] << 7) | tempBuffer[3];
                 MSG_Buffer->motorspeed = ((uint16_t)tempBuffer[4] << 7) | tempBuffer[5];
                 MSG_Buffer->motorangle = ((uint16_t)tempBuffer[6] << 7) | tempBuffer[7];
-
-                digitalWrite(13, HIGH);
             }
         }
 
@@ -339,45 +306,59 @@ void usbSendMSG(SENDMessage *MSG_Buffer)
     Serial.println("----"); */
 }
 
-void rpiCommunication()
+void rpiCommunication(char control)
 {
-    usbReceiveMSG(&msgRCVD);           //Process incoming message packet
-    char control = char(msgRCVD.type); //Then assign to a variable to control
-
     switch (control)
     {
     case 'F':
-        //goFORWARD(blockToTicks(3));
+        mvmtFORWARD();
         msgSEND.type = 'F';
         msgSEND.state = 'W';
         usbSendMSG(&msgSEND);
         break;
 
     case 'L':
-        //goLEFT(angleToTicks(90));
         msgSEND.type = 'L';
-        msgSEND.state = 'A';
+        msgSEND.state = 'T';
         usbSendMSG(&msgSEND);
+        if (setSpdL == 0 && setSpdR == 0)
+        {
+            mvmtLEFTStatic(angleToTicks(90));
+        }
+        else
+        {
+            mvmtLEFT(angleToTicks(90));
+        }
+        msgSEND.type = 'F';
+        msgSEND.state = 'F';
+        usbSendMSG(&msgSEND);
+
         break;
 
     case 'R':
-        //goRIGHT(angleToTicks(90));
         msgSEND.type = 'R';
-        msgSEND.state = 'D';
+        msgSEND.state = 'T';
+        usbSendMSG(&msgSEND);
+        if (setSpdL == 0 && setSpdR == 0)
+        {
+            mvmtRIGHTStatic(angleToTicks(90));
+        }
+        else
+        {
+            mvmtRIGHT(angleToTicks(90));
+        }
+        msgSEND.type = 'F';
+        msgSEND.state = 'F';
         usbSendMSG(&msgSEND);
         break;
 
     case 'S':
-        //stop();
+        mvmtSTOP();
         msgSEND.type = 'S';
         msgSEND.state = 'S';
         usbSendMSG(&msgSEND);
         break;
     }
-
-    memset(&msgRCVD, 0, sizeof(RCVDMessage)); //Clear received message
-    //usbSendMSG(&msgSEND);
-    delay(RPI_DELAY);
 }
 
 void stringCommands(char commands[], int len)
@@ -385,23 +366,37 @@ void stringCommands(char commands[], int len)
     static int calCounter = 0;
     static int x;
 
-    Serial.println(sizeof(commands));
-
     switch (commands[x])
     {
     case 'f':
-        if (setSpdL != 0 && setSpdR != 0)
+        if (setSpdL == 0 && setSpdR == 0)
         {
-            setSpdL = 400;
-            setSpdR = 400;
+            setSpdL = 350;
+            setSpdR = 350;
         }
-        //mvmtFORWARD(blockToTicks(1));
+        mvmtFORWARD(blockToTicks(1));
         break;
 
     case 'l':
+        if (setSpdL == 0 && setSpdR == 0)
+        {
+            mvmtLEFTStatic(angleToTicks(90));
+        }
+        else
+        {
+            mvmtLEFT(angleToTicks(90));
+        }
         break;
 
     case 'r':
+        if (setSpdL == 0 && setSpdR == 0)
+        {
+            mvmtRIGHTStatic(angleToTicks(90));
+        }
+        else
+        {
+            mvmtRIGHT(angleToTicks(90));
+        }
         break;
 
     case 's':
@@ -420,4 +415,3 @@ void stringCommands(char commands[], int len)
         x++;
     }
 }
-
