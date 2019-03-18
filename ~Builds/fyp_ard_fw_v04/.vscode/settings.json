@@ -2,5 +2,6 @@
   "C_Cpp.errorSquiggles": "Enabled",
   "C_Cpp.intelliSenseEngineFallback": "Disabled",
   "C_Cpp.intelliSenseEngine": "Tag Parser",
-  "arduino.defaultBaudRate": 9600
+  "arduino.defaultBaudRate": 9600,
+  "python.linting.pylintEnabled": true
 }

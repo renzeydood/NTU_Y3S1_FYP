@@ -2,7 +2,7 @@
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(19200);
     md.init();
 
     //Initialise Motor Encoder Pins, digitalWrite high to enable PullUp Resistors
@@ -21,6 +21,21 @@ void setup()
     memset(&msgSEND, 0, sizeof(SENDMessage));
 
     delay(500);
+
+    /*     while (1)
+    {
+        usbReceiveMSG(&msgRCVD);
+        if (msgRCVD.type == 'A')
+        {
+            msgSEND.type = 'O';
+            usbSendMSG(&msgSEND);
+            break;
+        }
+        msgSEND.type = 'I';
+        usbSendMSG(&msgSEND);
+    } */
+
+    D_STREAM("Initializations done!");
 }
 
 void loop()
@@ -29,13 +44,15 @@ void loop()
     {
         stringCommands(commands, sizeof(commands) / sizeof(char));
     }
+
     else
     {
         //Wait for start event
         usbReceiveMSG(&msgRCVD);     //Process incoming message packet
         char c = char(msgRCVD.type); //Then assign to a variable to control
+        D_STREAM(c);
         rpiCommunication(c);
-        memset(&msgRCVD, 0, sizeof(RCVDMessage)); //Clear received message
+        //memset(&msgRCVD, 0, sizeof(RCVDMessage)); //Clear received message
         delay(RPI_DELAY);
     }
 }
@@ -61,9 +78,9 @@ void mvmtFORWARD()
 
     //while (mCounter[0] < distance && mCounter[1] < distance)
     //{
-    if (millis() - lastTime > 100)
+    if (millis() - lastTime > 80)
     {
-        PIDControl(&setSpdR, &setSpdL, 40, 0, 40, 0); //By block 40, 0, 80, 0
+        PIDControl(&setSpdR, &setSpdL, 350, 200, 180, 0); //By block 40, 0, 80, 0
         lastTime = millis();
         md.setSpeeds(setSpdR, setSpdL);
     }
@@ -72,8 +89,8 @@ void mvmtFORWARD()
 
 void mvmtRIGHTStatic(int angle)
 {
-    int setSpdRi = -400; //Right motor
-    int setSpdLi = 400;  //Left motor
+    int setSpdRi = -MAXSPEED_R; //Right motor
+    int setSpdLi = MAXSPEED_L;  //Left motor
     long lastTime = millis();
     lastError = 0;
     totalErrors = 0;
@@ -99,8 +116,8 @@ void mvmtRIGHTStatic(int angle)
 
 void mvmtLEFTStatic(int angle)
 {
-    int setSpdRi = 400;  //Right motor
-    int setSpdLi = -400; //Left motor
+    int setSpdRi = MAXSPEED_R;  //Right motor
+    int setSpdLi = -MAXSPEED_L; //Left motor
     long lastTime = millis();
     lastError = 0;
     totalErrors = 0;
@@ -129,8 +146,11 @@ void mvmtSTOP()
     setSpdL = 0;
     setSpdR = 0;
     resetMCounters();
-    md.setBrakes(0, 0);
-    delay(2000);
+    md.setBrakes(400, 400);
+    //md.setM2Brake(400);
+    delay(30);
+    //md.setM1Brake(400);
+    //delay(2000);
 }
 
 void mvmtRIGHT(int angle)
@@ -147,7 +167,7 @@ void mvmtLEFT(int angle)
 {
     md.setM2Brake(400);
     resetMCounters();
-    while (mCounter[1] < 3012 + turnOffset)
+    while (mCounter[0] < (3012 + turnOffset))
     {
         md.setM1Speed(setSpdR);
     }
@@ -210,14 +230,13 @@ void spdAdjustment()
 }
 
 //------------Functions for IR Sensors------------//
-/*
-void scanFORWARD()
+int scanFORWARD()
 {
     int val = mfwdIrVal.distance(); // Middle
     delay(2);
-    D Serial << "FORWARD: () Mid: " << val << endl;
+    D_STREAM("FORWARD: () Mid: " << val);
+    return val;
 }
-*/
 
 //------------Functions for Motors------------//
 void resetMCounters()
@@ -255,10 +274,10 @@ void usbReceiveMSG(RCVDMessage *MSG_Buffer)
     static int index = 0;
     static boolean recieving = false;
 
-    while (Serial.available() > 0 && index < MAX_BYTE_DATA + 1) //Total index + STOP byte
+    while (Serial.available() > 0) //Total index + STOP byte
     {
         tempByte = Serial.read();
-        //Serial.println(tempByte);
+        D_STREAM(tempByte);
 
         if (recieving == true)
         {
@@ -272,12 +291,14 @@ void usbReceiveMSG(RCVDMessage *MSG_Buffer)
             {
                 recieving = false;
                 index = 0;
-
+                D_STREAM("Inside Serialread: " << MSG_Buffer->type);
                 MSG_Buffer->type = tempBuffer[0];
                 MSG_Buffer->id = tempBuffer[1];
                 MSG_Buffer->distance = ((uint16_t)tempBuffer[2] << 7) | tempBuffer[3];
                 MSG_Buffer->motorspeed = ((uint16_t)tempBuffer[4] << 7) | tempBuffer[5];
                 MSG_Buffer->motorangle = ((uint16_t)tempBuffer[6] << 7) | tempBuffer[7];
+                tempByte = 0;
+                memset(tempBuffer, 0, sizeof(tempBuffer));
             }
         }
 
@@ -295,32 +316,61 @@ void usbSendMSG(SENDMessage *MSG_Buffer)
     byte writebuff[] = {START, MSG_Buffer->type, MSG_Buffer->id, MSG_Buffer->state, highByte(MSG_Buffer->frontDistance), lowByte(MSG_Buffer->frontDistance), highByte(MSG_Buffer->bearings), lowByte(MSG_Buffer->bearings), STOP};
     Serial.write(writebuff, 9);
     //Serial << char(START) << char(MSG_Buffer->type) << char(MSG_Buffer->id) << char(MSG_Buffer->state) << char(STOP);
-    /* Serial.println("--SENDMESSAGE--");
-    Serial.println(START);
-    Serial.println(MSG_Buffer->type);
-    Serial.println(MSG_Buffer->id);
-    Serial.println(MSG_Buffer->state);
-    Serial.println(MSG_Buffer->frontDistance);
-    Serial.println(MSG_Buffer->bearings);
-    Serial.println(STOP);
-    Serial.println("----"); */
+    D_STREAM("--SENDMESSAGE--");
+    D_STREAM(START);
+    D_STREAM(MSG_Buffer->type);
+    D_STREAM(MSG_Buffer->id);
+    D_STREAM(MSG_Buffer->state);
+    D_STREAM(MSG_Buffer->frontDistance);
+    D_STREAM(MSG_Buffer->bearings);
+    D_STREAM(STOP);
+    D_STREAM("----");
 }
 
 void rpiCommunication(char control)
 {
+    int irfront = scanFORWARD();
+    D_STREAM("Sensor value: " << irfront);
+
     switch (control)
     {
     case 'F':
-        mvmtFORWARD();
-        msgSEND.type = 'F';
-        msgSEND.state = 'W';
-        usbSendMSG(&msgSEND);
+        if (irfront > 90)
+        {
+            mvmtFORWARD();
+            D_STREAM("Moving forward!");
+            if (msgSEND.type != 'F')
+            {
+                msgSEND.type = 'F';
+                msgSEND.state = 'W';
+                msgSEND.frontDistance = irfront;
+                msgSEND.id++;
+                usbSendMSG(&msgSEND);
+            }
+        }
+        else
+        {
+            if (msgSEND.type != 'E')
+            {
+                mvmtSTOP();
+                msgSEND.type = 'E';
+                msgSEND.state = 'S';
+                msgSEND.frontDistance = irfront;
+                msgSEND.id++;
+                usbSendMSG(&msgSEND);
+            }
+        }
+
         break;
 
     case 'L':
-        msgSEND.type = 'L';
-        msgSEND.state = 'T';
-        usbSendMSG(&msgSEND);
+        if (msgSEND.type != 'L')
+        {
+            msgSEND.type = 'L';
+            msgSEND.state = 'T';
+            msgSEND.id++;
+            usbSendMSG(&msgSEND);
+        }
         if (setSpdL == 0 && setSpdR == 0)
         {
             mvmtLEFTStatic(angleToTicks(90));
@@ -329,16 +379,23 @@ void rpiCommunication(char control)
         {
             mvmtLEFT(angleToTicks(90));
         }
-        msgSEND.type = 'F';
-        msgSEND.state = 'F';
-        usbSendMSG(&msgSEND);
-
+        if (msgSEND.type != 'F')
+        {
+            msgSEND.type = 'F';
+            msgSEND.state = 'F';
+            msgSEND.id++;
+            usbSendMSG(&msgSEND);
+        }
         break;
 
     case 'R':
-        msgSEND.type = 'R';
-        msgSEND.state = 'T';
-        usbSendMSG(&msgSEND);
+        if (msgSEND.type != 'R')
+        {
+            msgSEND.type = 'R';
+            msgSEND.state = 'T';
+            msgSEND.id++;
+            usbSendMSG(&msgSEND);
+        }
         if (setSpdL == 0 && setSpdR == 0)
         {
             mvmtRIGHTStatic(angleToTicks(90));
@@ -347,16 +404,27 @@ void rpiCommunication(char control)
         {
             mvmtRIGHT(angleToTicks(90));
         }
-        msgSEND.type = 'F';
-        msgSEND.state = 'F';
-        usbSendMSG(&msgSEND);
+        if (msgSEND.type != 'F')
+        {
+            msgSEND.type = 'F';
+            msgSEND.state = 'F';
+            msgSEND.id++;
+            usbSendMSG(&msgSEND);
+        }
         break;
+
+    case 'E':
 
     case 'S':
         mvmtSTOP();
-        msgSEND.type = 'S';
-        msgSEND.state = 'S';
-        usbSendMSG(&msgSEND);
+        D_STREAM("Movement stopped");
+        if (msgSEND.type != 'S')
+        {
+            msgSEND.type = 'S';
+            msgSEND.state = 'S';
+            msgSEND.id++;
+            usbSendMSG(&msgSEND);
+        }
         break;
     }
 }
@@ -371,10 +439,10 @@ void stringCommands(char commands[], int len)
     case 'f':
         if (setSpdL == 0 && setSpdR == 0)
         {
-            setSpdL = 350;
-            setSpdR = 350;
+            setSpdL = MAXSPEED_L;
+            setSpdR = MAXSPEED_R;
         }
-        mvmtFORWARD(blockToTicks(1));
+        mvmtFORWARD();
         break;
 
     case 'l':
@@ -401,6 +469,13 @@ void stringCommands(char commands[], int len)
 
     case 's':
         mvmtSTOP();
+        break;
+
+    case 'i':
+        while (1)
+        {
+            scanFORWARD();
+        }
         break;
 
     default:
