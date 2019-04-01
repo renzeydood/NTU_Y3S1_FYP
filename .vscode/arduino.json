@@ -1,5 +1,0 @@
-{
-    "board": "arduino:avr:uno",
-    "port": "COM5",
-    "sketch": "fyp_ard_fw_v00\\fyp_ard_fw_v00.ino"
-}
